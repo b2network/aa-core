@@ -5,6 +5,7 @@ import 'hardhat-deploy'
 import '@nomiclabs/hardhat-etherscan'
 
 import 'solidity-coverage'
+import 'hardhat-tracer'
 
 import * as fs from 'fs'
 
