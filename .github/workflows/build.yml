@@ -12,43 +12,6 @@ env:
 
 # todo: extract shared seto/checkout/install/compile, instead of repeat in each job.
 jobs:
-
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '14'
-      - uses: actions/checkout@v1
-      - uses: actions/cache@v2
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-      - run: yarn install
-      - run: yarn compile
-
-      - run: yarn run ci
-
-  gas-checks:
-    runs-on: ubuntu-latest
-    services:
-      localgeth:
-        image: dtr22/geth-dev
-
-    steps:
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '14'
-      - uses: actions/checkout@v1
-      - uses: actions/cache@v2
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-      - run: yarn install
-      - run: yarn compile
-      - run: yarn ci-gas-calc
-
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -85,4 +48,23 @@ jobs:
           path: |
             coverage/
             coverage.json
+
+  gas-checks:
+    runs-on: ubuntu-latest
+    services:
+      localgeth:
+        image: dtr22/geth-dev
+
+    steps:
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14'
+      - uses: actions/checkout@v1
+      - uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+      - run: yarn install
+      - run: yarn compile
+      - run: yarn ci-gas-calc
 
