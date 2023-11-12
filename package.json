@@ -5,8 +5,7 @@
   "files": [
     "LICENSE",
     "abis/**",
-    "artifacts/**",
-    "contracts/**"
+    "artifacts/**"
   ],
   "scripts": {
     "clean": "rm -rf cache artifacts typechain typechain-types",
