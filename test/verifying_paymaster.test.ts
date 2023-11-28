@@ -35,7 +35,7 @@ describe('EntryPoint with VerifyingPaymaster', function () {
     offchainSigner = createAccountOwner()
     accountOwner = createAccountOwner()
 
-    paymaster = await new VerifyingPaymaster__factory(ethersSigner).deploy(entryPoint.address, offchainSigner.address)
+    paymaster = await new VerifyingPaymaster__factory(ethersSigner).deploy(entryPoint.address, offchainSigner.address, ethersSigner.getAddress())
     await paymaster.addStake(1, { value: parseEther('2') })
     await entryPoint.depositTo(paymaster.address, { value: parseEther('1') });
     ({ proxy: account } = await createAccount(ethersSigner, accountOwner.address, entryPoint.address))
