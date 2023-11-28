@@ -7,7 +7,7 @@ contract TestVerifyingPaymaster is VerifyingPaymaster {
     constructor(
         IEntryPoint entryPoint,
         address verifyingSigner
-    ) VerifyingPaymaster(entryPoint, verifyingSigner) {
+    ) VerifyingPaymaster(entryPoint, verifyingSigner, msg.sender) {
         return;
     }
 
