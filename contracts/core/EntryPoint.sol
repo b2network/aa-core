@@ -18,10 +18,13 @@ import "./SenderCreator.sol";
 import "./Helpers.sol";
 import "./NonceManager.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard {
+contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard, Ownable {
 
     using UserOperationLib for UserOperation;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     SenderCreator private immutable senderCreator = new SenderCreator();
 
@@ -33,11 +36,35 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard 
 
     uint256 private constant REVERT_REASON_MAX_LEN = 2048;
 
+    EnumerableSet.AddressSet private allowedRelayers;
+
     /**
      * for simulation purposes, validateUserOp (and validatePaymasterUserOp) must return this value
      * in case of signature failure, instead of revert.
      */
     uint256 public constant SIG_VALIDATION_FAILED = 1;
+
+    constructor(address owner) {
+        require(owner != address(0), "EntryPoint: missing owner");
+        _transferOwnership(owner);
+    }
+
+    modifier onlyAllowedRelayer(address relayer) {
+        require(allowedRelayers.contains(relayer), "EntryPoint: relayer not allowed");
+        _;
+    }
+
+    function addRelayer(address relayer) external onlyOwner {
+        require(allowedRelayers.add(relayer), "EntryPoint: relayer already added");
+    }
+
+    function removeRelayer(address relayer) external onlyOwner {
+        require(allowedRelayers.remove(relayer), "EntryPoint: relayer not present");
+    }
+
+    function isAllowedRelayer(address relayer) external view returns (bool) {
+        return allowedRelayers.contains(relayer);
+    }
 
     /**
      * compensate the caller's beneficiary address with the collected fees of all UserOperations.
@@ -89,7 +116,7 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard 
      * @param ops the operations to execute
      * @param beneficiary the address to receive the fees
      */
-    function handleOps(UserOperation[] calldata ops, address payable beneficiary) public nonReentrant {
+    function handleOps(UserOperation[] calldata ops, address payable beneficiary) public onlyAllowedRelayer(msg.sender) nonReentrant {
 
         uint256 opslen = ops.length;
         UserOpInfo[] memory opInfos = new UserOpInfo[](opslen);
@@ -120,7 +147,7 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard 
     function handleAggregatedOps(
         UserOpsPerAggregator[] calldata opsPerAggregator,
         address payable beneficiary
-    ) public nonReentrant {
+    ) public onlyAllowedRelayer(msg.sender) nonReentrant {
 
         uint256 opasLen = opsPerAggregator.length;
         uint256 totalOps = 0;
