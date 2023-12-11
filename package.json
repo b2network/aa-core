@@ -1,6 +1,6 @@
 {
   "name": "@b2network/aa-core",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "ERC-4337 Account Abstraction Implementation",
   "files": [
     "LICENSE",
