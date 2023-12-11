@@ -55,7 +55,7 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard,
     }
 
     function addRelayer(address relayer) external onlyOwner {
-        require(allowedRelayers.add(relayer), "EntryPoint: relayer already added");
+        require(allowedRelayers.add(relayer), "EntryPoint: relayer exists");
     }
 
     function removeRelayer(address relayer) external onlyOwner {

@@ -72,8 +72,8 @@ describe('EntryPoint', function () {
 
     entryPoint = await deployEntryPoint()
 
-    accountOwner = createAccountOwner();
-    ({
+    accountOwner = createAccountOwner()
+    ;({
       proxy: account,
       accountFactory: simpleAccountFactory
     } = await createAccount(ethersSigner, await accountOwner.getAddress(), entryPoint.address))
@@ -784,6 +784,8 @@ describe('EntryPoint', function () {
       })
 
       it('should fail to call recursively into handleOps', async () => {
+        await entryPoint.addRelayer(account.address)
+
         const beneficiaryAddress = createAddress()
 
         const callHandleOps = entryPoint.interface.encodeFunctionData('handleOps', [[], beneficiaryAddress])
