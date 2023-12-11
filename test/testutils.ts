@@ -3,7 +3,8 @@ import {
   arrayify,
   hexConcat,
   keccak256,
-  parseEther
+  parseEther,
+  hexlify
 } from 'ethers/lib/utils'
 import { BigNumber, BigNumberish, Contract, ContractReceipt, Signer, Wallet } from 'ethers'
 import {
@@ -265,9 +266,16 @@ export function simulationResultWithAggregationCatch (e: any): any {
 
 export async function deployEntryPoint (provider = ethers.provider): Promise<EntryPoint> {
   const create2factory = new Create2Factory(provider)
-  const epf = new EntryPoint__factory(provider.getSigner())
-  const addr = await create2factory.deploy(epf.bytecode, 0, process.env.COVERAGE != null ? 20e6 : 8e6)
-  return EntryPoint__factory.connect(addr, provider.getSigner())
+  const signer = provider.getSigner()
+  const epf = new EntryPoint__factory(signer)
+  const signerAddress = await signer.getAddress()
+  const bytecode = epf.getDeployTransaction(signerAddress).data!
+  const addr = await create2factory.deploy(hexlify(bytecode), 0, process.env.COVERAGE != null ? 20e6 : 8e6)
+  const inst = EntryPoint__factory.connect(addr, provider.getSigner())
+  if (!await inst.isAllowedRelayer(signerAddress)) {
+    await inst.addRelayer(signerAddress)
+  }
+  return inst
 }
 
 export async function isDeployed (addr: string): Promise<boolean> {

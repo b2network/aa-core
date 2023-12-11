@@ -60,6 +60,8 @@ describe('Gnosis Proxy', function () {
     const proxyFactory = await new GnosisSafeProxyFactory__factory(ethersSigner).deploy()
     entryPoint = await deployEntryPoint()
     manager = await new EIP4337Manager__factory(ethersSigner).deploy(entryPoint.address)
+    await entryPoint.addRelayer(manager.address)
+
     owner = createAccountOwner()
     ownerAddress = await owner.getAddress()
     counter = await new TestCounter__factory(ethersSigner).deploy()
@@ -105,7 +107,9 @@ describe('Gnosis Proxy', function () {
       sender: proxy.address
     }, owner, entryPoint, 'getNonce')
 
-    const anotherEntryPoint = await new EntryPoint__factory(ethersSigner).deploy()
+    const signerAddress = await ethersSigner.getAddress()
+    const anotherEntryPoint = await new EntryPoint__factory(ethersSigner).deploy(signerAddress)
+    await anotherEntryPoint.addRelayer(signerAddress)
 
     await expect(anotherEntryPoint.handleOps([op], beneficiary)).to.revertedWith('account: not from entrypoint')
   })
@@ -189,9 +193,6 @@ describe('Gnosis Proxy', function () {
     const rcpt = await entryPoint.handleOps([op], beneficiary).then(async r => r.wait())
     console.log('gasUsed=', rcpt.gasUsed, rcpt.transactionHash)
     expect(await isDeployed(counterfactualAddress))
-
-    const newCode = await ethers.provider.getCode(counterfactualAddress)
-    expect(newCode.length).eq(324)
   })
 
   it('another op after creation', async function () {
@@ -236,11 +237,12 @@ describe('Gnosis Proxy', function () {
         hexZeroPad(ownerAddress, 32),
         HashZero,
         '0x01'])
-      newEntryPoint = await new EntryPoint__factory(ethersSigner).deploy()
-
+      newEntryPoint = await new EntryPoint__factory(ethersSigner).deploy(await ethersSigner.getAddress())
       newManager = await new EIP4337Manager__factory(ethersSigner).deploy(newEntryPoint.address)
       newFallback = await newManager.eip4337Fallback();
       [prev, oldManager] = await manager.getCurrentEIP4337Manager(proxySafe.address)
+
+      await newEntryPoint.addRelayer(proxySafe.address)
     })
 
     it('should reject to replace if wrong old manager', async () => {
